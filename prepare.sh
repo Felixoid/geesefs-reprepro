@@ -5,20 +5,20 @@ source env.sh
 mkdir -p "$GIT_ROOT/prepare"
 cd "$GIT_ROOT/prepare"
 
-curl -C - -LO https://github.com/yandex-cloud/geesefs/releases/download/v0.41.1/geesefs-linux-amd64
-chmod +x geesefs-linux-amd64
+curl -C - -LO "https://github.com/yandex-cloud/geesefs/releases/download/v0.41.1/geesefs-linux-${DEB_ARCH}"
+chmod +x "geesefs-linux-${DEB_ARCH}"
 
-if [ ! -f reprepro_5.4.1-1_amd64.deb ]; then
+if [ ! -f "reprepro_5.4.1-1_${DEB_ARCH}.deb" ]; then
   git clone https://salsa.debian.org/debian/reprepro.git
   git -C reprepro checkout reprepro-debian-5.4.1-1
 
-  docker run -i -v "$GIT_ROOT/prepare":/prepare -w /prepare ubuntu:22.04 << EOF
+  docker run --rm -i -v "$GIT_ROOT/prepare":/prepare -w /prepare ubuntu:22.04 << EOF
 apt update
 apt-get --yes install build-essential:native libgpgme-dev libdb-dev libbz2-dev liblzma-dev libarchive-dev shunit2:native db-util:native devscripts libz-dev debhelper-compat
 cd reprepro
 dpkg-buildpackage -b --no-sign
 git config --global --add safe.directory /prepare/reprepro
-git clean -fd
+git clean -fdx
 git checkout .
 EOF
 fi
@@ -27,11 +27,17 @@ fi
 mkdir -p "$GIT_ROOT/data"
 cd "$GIT_ROOT/data"
 
+for f in geesefs-linux-${DEB_ARCH} reprepro_5.4.1-1_${DEB_ARCH}.deb; do
+  [ -f "$f" ] || cp "$GIT_ROOT/prepare/$f" .
+done
+
+curl_args=()
 for package in clickhouse-common-static{,-dbg} clickhouse-client clickhouse-server clickhouse-keeper{,-dbg} clickhouse-{library,odbc}-bridge; do
   for arch in amd64 arm64; do
-    curl -C - -LO "https://packages.clickhouse.com/deb/pool/main/c/clickhouse/${package}_24.6.2.17_${arch}.deb"
+    curl_args+=(-LO "https://packages.clickhouse.com/deb/pool/main/c/clickhouse/${package}_24.6.2.17_${arch}.deb")
   done
 done
+curl -sC - "${curl_args[@]}"
 
 if [ ! -d "$GIT_ROOT/data/gnupg" ]; then
   mkdir -p "$GIT_ROOT/data/gnupg"
