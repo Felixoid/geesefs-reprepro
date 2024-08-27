@@ -19,6 +19,13 @@ export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY R2_ENDPOINT R2_BUCKET
 
 mkdir -p data/r2-mount
 
+if grep -q 'server-side' data/geesefs.log; then
+  echo "Is reproduced during the last run"
+  exit 0
+fi
+
+rm -f data/geesefs.log
+
 docker run -i -e PACKAGE_VERSIONS="$PACKAGE_VERSIONS" -e GNUPGHOME=/data/gnupg \
   -e AWS_SECRET_ACCESS_KEY -e AWS_ACCESS_KEY_ID -e R2_ENDPOINT -e R2_BUCKET \
   -v ./data:/data --privileged --cap-add=SYS_ADMIN --device /dev/fuse \
