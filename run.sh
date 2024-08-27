@@ -2,7 +2,7 @@ set -e
 source ./env.sh
 [ -f ./secrets.sh ] && source ./secrets.sh
 
-[ -f "data/distributions" ] || ./prepare.sh
+[ -f "data/distributions" ] || bash -x ./prepare.sh
 
 read_input() {
   read -rp "Enter value for $1: " input
