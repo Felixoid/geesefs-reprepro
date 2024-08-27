@@ -20,7 +20,7 @@ export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY R2_ENDPOINT R2_BUCKET
 mkdir -p data/r2-mount
 
 docker run -i -e AWS_SECRET_ACCESS_KEY -e AWS_ACCESS_KEY_ID -e R2_ENDPOINT -e R2_BUCKET -e GNUPGHOME=/data/gnupg \
-  -v ./data:/data --cap-add=SYS_ADMIN --device /dev/fuse \
+  -v ./data:/data --privileged --cap-add=SYS_ADMIN --device /dev/fuse \
   geesefs-reproduce:latest bash -ex << 'EOF'
 DEB_HOST_ARCH=$(dpkg-architecture -q DEB_HOST_ARCH)
 apt install /data/reprepro_5.4.1-1_${DEB_HOST_ARCH}.deb
