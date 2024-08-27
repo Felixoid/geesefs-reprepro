@@ -43,7 +43,7 @@ for package in clickhouse-common-static{,-dbg} clickhouse-client clickhouse-serv
     done
   done
 done
-[ ${#curl_args[@]} -eq 0 ] || curl -sC - "${curl_args[@]}"
+[ ${#curl_args[@]} -eq 0 ] || curl -C - "${curl_args[@]}"
 
 GEN_KEY_ID=
 if [ ! -d "$GIT_ROOT/data/gnupg" ]; then
