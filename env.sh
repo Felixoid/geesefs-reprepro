@@ -2,7 +2,7 @@
 GIT_ROOT=$(git rev-parse --show-cdup)
 GIT_ROOT=$(readlink -f "${GIT_ROOT:-.}")
 ARCH=$(uname -m)
-PACKAGE_VERSIONS="24.6.2.17 24.6.3.38 24.8.2.3 24.3.9.5"
+PACKAGE_VERSIONS="24.6.2.17 24.6.3.38 24.8.2.3"
 case "$ARCH" in
   x86_64 )
     DEB_ARCH=amd64 ;;
