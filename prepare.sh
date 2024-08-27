@@ -1,25 +1,28 @@
 set -e
-source env.sh
+source ./env.sh
+
+docker image inspect geesefs-reproduce > /dev/null \
+  || docker build -t geesefs-reproduce .
 
 # Download and build software
 mkdir -p "$GIT_ROOT/prepare"
 cd "$GIT_ROOT/prepare"
 
-curl -C - -LO "https://github.com/yandex-cloud/geesefs/releases/download/v0.41.1/geesefs-linux-${DEB_ARCH}"
-chmod +x "geesefs-linux-${DEB_ARCH}"
+if ! [ -x "geesefs-linux-${DEB_ARCH}" ]; then
+  curl -C - -LO "https://github.com/yandex-cloud/geesefs/releases/download/v0.41.1/geesefs-linux-${DEB_ARCH}"
+  chmod +x "geesefs-linux-${DEB_ARCH}"
+fi
 
 if [ ! -f "reprepro_5.4.1-1_${DEB_ARCH}.deb" ]; then
   git clone https://salsa.debian.org/debian/reprepro.git
   git -C reprepro checkout reprepro-debian-5.4.1-1
 
-  docker run --rm -i -v "$GIT_ROOT/prepare":/prepare -w /prepare ubuntu:22.04 << EOF
-apt update
-apt-get --yes install build-essential:native libgpgme-dev libdb-dev libbz2-dev liblzma-dev libarchive-dev shunit2:native db-util:native devscripts libz-dev debhelper-compat
-cd reprepro
-dpkg-buildpackage -b --no-sign
-git config --global --add safe.directory /prepare/reprepro
-git clean -fdx
-git checkout .
+  docker run --rm -i -v "$GIT_ROOT/prepare":/prepare -w /prepare geesefs-reproduce << EOF
+    cd reprepro
+    dpkg-buildpackage -b --no-sign
+    git config --global --add safe.directory /prepare/reprepro
+    git clean -fdx
+    git checkout .
 EOF
 fi
 
@@ -34,12 +37,17 @@ done
 curl_args=()
 for package in clickhouse-common-static{,-dbg} clickhouse-client clickhouse-server clickhouse-keeper{,-dbg} clickhouse-{library,odbc}-bridge; do
   for arch in amd64 arm64; do
-    curl_args+=(-LO "https://packages.clickhouse.com/deb/pool/main/c/clickhouse/${package}_24.6.2.17_${arch}.deb")
+    for version in 24.6.2.17 24.6.3.38; do
+      package_name="${package}_${version}_${arch}.deb"
+      [ -f "$package_name" ] || curl_args+=(-LO "https://packages.clickhouse.com/deb/pool/main/c/clickhouse/${package_name}")
+    done
   done
 done
-curl -sC - "${curl_args[@]}"
+[ ${#curl_args[@]} -eq 0 ] || curl -sC - "${curl_args[@]}"
 
+GEN_KEY_ID=
 if [ ! -d "$GIT_ROOT/data/gnupg" ]; then
+  GEN_KEY_ID=1
   mkdir -p "$GIT_ROOT/data/gnupg"
   chmod 0700 "$GIT_ROOT/data/gnupg"
   (
@@ -48,7 +56,7 @@ if [ ! -d "$GIT_ROOT/data/gnupg" ]; then
   )
 fi
 
-if [ ! -f "$GIT_ROOT/data/key-id" ]; then
+if [ ! -f "$GIT_ROOT/data/key-id" ] || [ "$GEN_KEY_ID" ]; then
   (
     GNUPGHOME="$GIT_ROOT/data/gnupg" \
     gpg --with-colons --with-fingerprint --list-secret-key dummy@test-r2 \

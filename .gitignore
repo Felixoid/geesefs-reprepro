@@ -1,3 +1,4 @@
 # the directories to reproduce the bug. Built/downloaded software and packages to deploy
 data/
 prepare/
+secrets.sh
