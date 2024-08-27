@@ -19,7 +19,8 @@ export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY R2_ENDPOINT R2_BUCKET
 
 mkdir -p data/r2-mount
 
-docker run -i -e AWS_SECRET_ACCESS_KEY -e AWS_ACCESS_KEY_ID -e R2_ENDPOINT -e R2_BUCKET -e GNUPGHOME=/data/gnupg \
+docker run -i -e PACKAGE_VERSIONS="$PACKAGE_VERSIONS" -e GNUPGHOME=/data/gnupg \
+  -e AWS_SECRET_ACCESS_KEY -e AWS_ACCESS_KEY_ID -e R2_ENDPOINT -e R2_BUCKET \
   -v ./data:/data --privileged --cap-add=SYS_ADMIN --device /dev/fuse \
   geesefs-reproduce:latest bash -ex << 'EOF'
 DEB_HOST_ARCH=$(dpkg-architecture -q DEB_HOST_ARCH)
@@ -32,8 +33,17 @@ done
 rm -rf "${REPRO_DIR}"
 mkdir -p "${REPRO_DIR}/configs/deb/conf"
 cp /data/distributions "${REPRO_DIR}/configs/deb/conf/distributions"
-reprepro --basedir "${REPRO_DIR}/configs/deb" --verbose --export=force --outdir "${REPRO_DIR}/deb" includedeb stable /data/*24.6.2.17*.deb
-reprepro --basedir "${REPRO_DIR}/configs/deb" --verbose --export=force --outdir "${REPRO_DIR}/deb" includedeb stable /data/*24.6.3.38*.deb
+for version in $PACKAGE_VERSIONS; do
+  reprepro --basedir "${REPRO_DIR}/configs/deb" --verbose --export=force --outdir "${REPRO_DIR}/deb" includedeb stable /data/*"$version"*.deb
+  packages=()
+  for package in /data/*"$version"*.deb; do
+    package=$(basename "$package")
+    version=${package#*_}; version=${version%_*}
+    package=${package%%_*}
+    packages+=("$package=$version")
+  done
+  reprepro --basedir "${REPRO_DIR}/configs/deb" --verbose --export=force --outdir "${REPRO_DIR}/deb" copy lts stable "${packages[@]}"
+done
 umount /data/r2-mount
 wait
 EOF
