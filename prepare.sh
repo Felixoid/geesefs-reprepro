@@ -37,7 +37,7 @@ done
 curl_args=()
 for package in clickhouse-common-static{,-dbg} clickhouse-client clickhouse-server clickhouse-keeper{,-dbg} clickhouse-{library,odbc}-bridge; do
   for arch in amd64 arm64; do
-    for version in 24.6.2.17 24.6.3.38; do
+    for version in 24.6.2.17 24.6.3.38 24.8.2.3 24.3.9.5 ; do
       package_name="${package}_${version}_${arch}.deb"
       [ -f "$package_name" ] || curl_args+=(-LO "https://packages.clickhouse.com/deb/pool/main/c/clickhouse/${package_name}")
     done
