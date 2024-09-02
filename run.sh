@@ -32,7 +32,7 @@ docker run -i -e PACKAGE_VERSIONS="$PACKAGE_VERSIONS" -e GNUPGHOME=/data/gnupg \
   geesefs-reproduce:latest bash -x << 'EOF'
 DEB_HOST_ARCH=$(dpkg-architecture -q DEB_HOST_ARCH)
 apt install /data/reprepro_5.4.1-1_${DEB_HOST_ARCH}.deb
-"./geesefs-linux-${DEB_HOST_ARCH}" "$R2_BUCKET" /data/r2-mount -o "rw,--cheap,--fsync-on-close,--file-mode=0666,--dir-mode=0777,--endpoint=$R2_ENDPOINT,--memory-limit=2050,--gc-interval=100,--max-flushers=5,--max-parallel-parts=3,--max-parallel-copy=2,dev,suid,--debug_s3,--log-file=/data/geesefs.log,-f" &
+"./geesefs-linux-${DEB_HOST_ARCH}" "$R2_BUCKET" /data/r2-mount -o "rw,--cheap,--file-mode=0666,--dir-mode=0777,--endpoint=$R2_ENDPOINT,--memory-limit=2050,--gc-interval=100,--max-flushers=5,--max-parallel-parts=3,--max-parallel-copy=2,dev,suid,--debug_s3,--debug_fuse,--log-file=/data/geesefs.log,-f" &
 REPRO_DIR=/data/r2-mount/reproduce
 for i in {1..20}; do
   findmnt /data/r2-mount && break || sleep 1
