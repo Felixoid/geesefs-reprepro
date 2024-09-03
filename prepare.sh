@@ -9,7 +9,7 @@ mkdir -p "$GIT_ROOT/prepare"
 cd "$GIT_ROOT/prepare"
 
 if ! [ -x "geesefs-linux-${DEB_ARCH}" ]; then
-  curl -C - -LO "https://github.com/yandex-cloud/geesefs/releases/download/v0.41.1/geesefs-linux-${DEB_ARCH}"
+  curl -C - -LO "https://github.com/yandex-cloud/geesefs/releases/download/v0.41.2/geesefs-linux-${DEB_ARCH}"
   chmod +x "geesefs-linux-${DEB_ARCH}"
 fi
 
